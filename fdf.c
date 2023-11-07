@@ -47,14 +47,29 @@ void	ft_mlx_pxl_draw_addr(t_data *img, char *addr, int color)
 	}
 }
 
-void	ft_draw_line(t_data *img, int dx, int dy, int fin_x, char *addr)
+void	ft_draw_straight_line(t_data *img, int dy, char *addr)
+{
+	int	i;
+
+	i = 0;
+	if (dy < 0)
+		dy *= -1;
+	while (i < dy)
+	{
+		addr += img->line_length;
+		i++;
+		ft_mlx_pxl_draw_addr(img, addr, 0x00FFFFFF);
+	}
+}
+
+void	ft_draw_angle_line(t_data *img, int dx, int dy, int fin_x, char *addr)
 {
 	int	error;
 	int	i;
 	int	sign;
 
 	sign = 1;
-	if (dy / dx < 0)
+	if (dy != 0 && dx != 0 && (dy / dx < 0))
 		sign = -1;
 	if (dy < 0)
 		dy = dy * -1;
@@ -82,15 +97,23 @@ int main(void)
 	t_data img;
 	void *mlx_window;
 	int i = 0;
+	int p2[2] = {400, 300};
+	int p1[2] = {400, 400};
 
 	mlx = mlx_init();
 	mlx_window = mlx_new_window(mlx, 500, 500, "hi");
 	img.img = mlx_new_image(mlx, 500, 500);
 	img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel, &img.line_length, 
 		&img.endian);
-	ft_mlx_pxl_draw_pos(&img, 200, 100, 0x00FFFFFF);
-	ft_mlx_pxl_draw_pos(&img, 100, 80, 0x00FFFFFF);
-	ft_draw_line(&img, 100 - 200, 80 - 100, 100, img.addr + (((img.bits_per_pixel / 8) * 200) + (img.line_length * 100)));
+	char *addr = img.addr + (((img.bits_per_pixel / 8) * p1[0]) + (img.line_length * p1[1])); 
+	
+	ft_mlx_pxl_draw_pos(&img, p1[0], p1[1], 0x00FF0000);
+	if (p1[0] - p2[0] != 0)
+		ft_draw_angle_line(&img, p1[0] - p2[0], p1[1] - p2[1], p2[0], addr);
+	else
+		ft_draw_straight_line(&img, p1[1] - p2[1], addr);
+	
+	ft_mlx_pxl_draw_pos(&img, p2[0], p2[1], 0x00FF0000);
 	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	mlx_loop(mlx);
 }
