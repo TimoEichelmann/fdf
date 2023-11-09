@@ -1,4 +1,5 @@
 #include <mlx.h>
+#include <stdlib.h>
 
 typedef struct	s_data {
 	void	*img;
@@ -56,22 +57,22 @@ void	ft_draw_straight_line(t_data *img, int dy, char *addr)
 	}
 }
 
-void	ft_draw_angle_line(t_data *img, int dx, int dy, int fin_x, char *addr)
+void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr)
 {
 	int	error;
 	int	i;
 	int	sign;
 
 	sign = 1;
+	i = 0;
 	if (dy != 0 && dx != 0 && (dy / dx < 0))
 		sign = -1;
 	if (dy < 0)
 		dy = dy * -1;
 	if (dx < 0)
 		dx = dx * - 1;
-	i = fin_x + dx * (-1);
 	error = dx / 2;
-	while (i != fin_x)
+	while (i != dx)
 	{
 		addr = addr + (img->bpp / 8);
 		if (error - dy <= 0)
@@ -90,18 +91,18 @@ char *ft_draw(int *p1, int *p2, t_data *img)
 {
 	char *addr;
 
-	p1[1] += p1[2];
-	p2[1] += p2[2]; 
-	ft_mlx_pxl_draw_pos(&img, p1[0], p1[1], 0x00FF0000);
-	ft_mlx_pxl_draw_pos(&img, p2[0], p2[1], 0x00FF0000);
-	if (p1[1] + p1[2] > p2[1] + p2[2])
-		addr = img.addr + (((img.bpp / 8) * p2[0]) + (img.ll * p2[1]));
+	// p1[1] += p1[2];
+	// p2[1] += p2[2];
+	if (p2[1] - p1[1] / p2[0] - p1[0] >= 0)
+		addr = img->addr + (((img->bpp / 8) * p2[0]) + (img->ll * p2[1]));
 	else
-		addr = img.addr + (((img.bpp / 8) * p1[0]) + (img.ll * p1[1]));
+		addr = img->addr + (((img->bpp / 8) * p1[0]) + (img->ll * p1[1]));
 	if (p1[0] - p2[0] != 0)
-		ft_draw_angle_line(&img, p1[0] - p2[0], p1[1] - p2[1], p2[0], addr);
+		ft_draw_angle_line(img, p1[0] - p2[0], p1[1] - p2[1], addr);
 	else
-		ft_draw_straight_line(&img, p1[1] - p2[1], addr);
+		ft_draw_straight_line(img, p1[1] - p2[1], addr);
+	ft_mlx_pxl_draw_pos(img, p1[0], p1[1], 0x00FF0000);
+	ft_mlx_pxl_draw_pos(img, p2[0], p2[1], 0x00FF0000);
 }
 
 int main(void)
@@ -110,14 +111,21 @@ int main(void)
 	t_data img;
 	void *mlx_window;
 	int i = 0;
-	int p2[3] = {400, 300, 0};
-	int p1[3] = {400, 400, 0};
+	int *p2;
+	int *p1;
 
+	p1 = malloc(sizeof(int) * 2);
+	p2 = malloc(sizeof(int) * 2);
+	p1[0] = 400;
+	p1[1] = 200;
+	p2[0] = 300;
+	p2[1] = 100;
 	mlx = mlx_init();
 	mlx_window = mlx_new_window(mlx, 500, 500, "hi");
 	img.img = mlx_new_image(mlx, 500, 500);
 	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll, 
 		&img.endian); 
+	ft_draw(p1, p2, &img);
 	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	mlx_loop(mlx);
 }
