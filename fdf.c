@@ -1,5 +1,7 @@
 #include <mlx.h>
 #include <stdlib.h>
+#include "./libft/libft.h"
+#include <fcntl.h>
 
 typedef struct	s_data {
 	void	*img;
@@ -7,7 +9,13 @@ typedef struct	s_data {
 	int		bpp;
 	int		ll;
 	int		endian;
-}				t_data;
+}t_data;
+
+typedef struct	s_point {
+	int	x;
+	int	y;
+	// int	z;
+}t_point;
 
 
 void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
@@ -86,46 +94,133 @@ void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr)
 	}
 }
 
-
-char *ft_draw(int *p1, int *p2, t_data *img)
+void	ft_copy_grid(int ***result, int **grid, int len)
 {
-	char *addr;
+	int **new;
+	int	i;
+	int	j;
 
-	// p1[1] += p1[2];
-	// p2[1] += p2[2];
-	if (p2[1] - p1[1] / p2[0] - p1[0] >= 0)
-		addr = img->addr + (((img->bpp / 8) * p2[0]) + (img->ll * p2[1]));
-	else
-		addr = img->addr + (((img->bpp / 8) * p1[0]) + (img->ll * p1[1]));
-	if (p1[0] - p2[0] != 0)
-		ft_draw_angle_line(img, p1[0] - p2[0], p1[1] - p2[1], addr);
-	else
-		ft_draw_straight_line(img, p1[1] - p2[1], addr);
-	ft_mlx_pxl_draw_pos(img, p1[0], p1[1], 0x00FF0000);
-	ft_mlx_pxl_draw_pos(img, p2[0], p2[1], 0x00FF0000);
+	i = 0;
+	j = 0;
+	new = *result;
+	while (grid[j][i])
+	{
+		new[j][i] = grid[j][i];
+		if (i == len)
+		{
+			i = 0;
+			j++;
+		}
+		i++;
+	}
 }
 
-int main(void)
+int	*ft_create_grid_line(char ***s)
 {
-	void *mlx;
-	t_data img;
-	void *mlx_window;
-	int i = 0;
-	int *p2;
-	int *p1;
+	char	**splitted;
+	int		*result;
+	int		i;
 
-	p1 = malloc(sizeof(int) * 2);
-	p2 = malloc(sizeof(int) * 2);
-	p1[0] = 400;
-	p1[1] = 200;
-	p2[0] = 300;
-	p2[1] = 100;
-	mlx = mlx_init();
-	mlx_window = mlx_new_window(mlx, 500, 500, "hi");
-	img.img = mlx_new_image(mlx, 500, 500);
-	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll, 
-		&img.endian); 
-	ft_draw(p1, p2, &img);
-	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
-	mlx_loop(mlx);
+	i = 0;
+	splitted = *s;
+	while (splitted[i])
+		i++;
+	result = malloc(sizeof(int) * i);
+	i = 0;
+	while (splitted[i])
+	{
+		result[i] = ft_atoi(splitted[i]);
+		free(splitted[i]);
+		i++;
+	}
+	free(splitted);
+	return (result);
+}
+
+int	**ft_transform(int ***o_g, char **line, int row)
+{
+	int		**grid;
+	char	**splitted;
+	int		i;
+	int		**old_grid;
+
+	i = 0;
+	grid = malloc(sizeof(int *) * row + 1);
+	if (row != 0)
+	{
+		old_grid = *o_g;
+		while (i < row)
+		{
+			grid[i] = old_grid[i];
+			i++;
+		}
+		free(old_grid);
+	}
+	splitted = ft_split(*line, ' ');
+	free(*line);
+	grid[i] = ft_create_grid_line(&splitted);
+	printf("%d", grid[i][0]);
+	// int	j = 0;
+	// while (grid[i][j])
+	// {
+	// 	printf("%d\n", grid[i][j]);
+	// 	j++;
+	// }
+	// int j = 0;
+	// printf("%d", grid[i][0]);
+	// while (grid[i][j])
+	// {
+		// printf("%d", grid[i][j]);
+	// 	j++;
+	// }
+	return (grid);
+}
+
+int	**ft_initialize(int fd)
+{
+	int	**grid;
+	char	*line;
+	// int		**grid;
+	int		i;
+
+	i = 0;
+	line = "hi";
+	grid = NULL;
+	while (line != NULL)
+	{
+		line = get_next_line(fd);
+		if (line != NULL)
+			grid = ft_transform(&grid, &line, i);
+		i++;
+	}
+	i = 0;
+	free(line);
+	// if (grid == NULL)
+	// 	return (NULL);
+	// return (grid);
+	return (grid);
+}
+
+int main(int argc, char **argv)
+{
+	// void *mlx;
+	// t_data img;
+	// void *mlx_window;
+	int		fd;
+	int		**grid;
+
+	if (argc != 2)
+		return (0);
+	fd = open(argv[1], O_RDONLY);
+	if (fd < 0)
+		return (0);
+	// mlx = mlx_init();
+	// mlx_window = mlx_new_window(mlx, 1000, 1000, "hi");
+	// img.img = mlx_new_image(mlx, 1000, 1000);
+	// img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
+	// &img.endian);
+	grid = ft_initialize(fd);
+	free(grid);
+	// mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
+	// mlx_loop(mlx);
 }
