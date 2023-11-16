@@ -218,6 +218,42 @@ char	*ft_line_modify(char *line)
 	return (result);
 }
 
+int	ft_iso_proj(int x, int y, int z)
+{
+	
+}
+
+// start at [50][50]
+void	ft_coordinates(int	**grid)
+{
+	int	row;
+	int	len;
+	int	dist;
+
+	row = 0;
+	len = 0;
+	while (grid[row])
+		row++;
+	while (grid[row - 1][len] != -1)
+		len++;
+	if (row > len)
+		dist = 600 / row;
+	else
+		dist = 600 / len;
+	len = 0;
+	row = 0;
+	while (grid[row])
+	{
+		while (grid[row][len])
+		{
+			grid[row][len] = ft_iso_proj(len, row, grid[row][len]);
+			len++;
+		}
+		row++;
+		len = 0;
+	}
+}
+
 int	**ft_initialize(int fd)
 {
 	int	**grid;
@@ -241,6 +277,7 @@ int	**ft_initialize(int fd)
 	}
 	stash = ft_line_modify(stash);
 	grid = ft_transform(stash, i);
+	// ft_coordinates(grid);
 	return (grid);
 }
 
@@ -262,8 +299,8 @@ int main(int argc, char **argv)
 	if (fd < 0)
 		return (0);
 	// mlx = mlx_init();
-	// mlx_window = mlx_new_window(mlx, 1000, 1000, "hi");
-	// img.img = mlx_new_image(mlx, 1000, 1000);
+	// mlx_window = mlx_new_window(mlx, 700, 700, "hi");
+	// img.img = mlx_new_image(mlx, 700, 700);
 	// img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
 	// &img.endian);
 	grid = ft_initialize(fd);
@@ -272,17 +309,27 @@ int main(int argc, char **argv)
 		return (0);
 		ft_printf("Map is not properly formatted");
 	}
+	while (grid[i] && grid[i][j] != -1)
+	{
+		if (grid[i][j + 1] == -1 && grid[i + 1])
+		{
+			printf("%d\n", grid[i][j]);
+			i++;
+			j = 0;
+		}
+		printf("%d", grid[i][j]);
+		j++;
+	}
 	while (grid[i])
 	{
-		while (grid[i][j] != -1)
+		while (grid[i][j])
 		{
 			printf("%d", grid[i][j]);
 			j++;
 		}
-		free(grid[i]);
-		i++;
 		printf("\n");
 		j = 0;
+		i++;
 	}
 	free(grid);
 	// mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
