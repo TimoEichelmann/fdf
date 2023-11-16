@@ -94,110 +94,153 @@ void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr)
 	}
 }
 
-void	ft_copy_grid(int ***result, int **grid, int len)
+char	*ft_join(char *stash, char *line)
 {
-	int **new;
+	char	*result;
+	int		i;
+
+	i = 0;
+	result = malloc(sizeof(char) * (ft_strlen(stash) + ft_strlen(line) + 2));
+	if (stash)
+		ft_strlcpy(result, stash, ft_strlen(stash));
+	ft_strlcpy(result + ft_strlen(stash), line, ft_strlen(line));
+	result[ft_strlen(stash) + ft_strlen(line)] = '\0';
+	while (result[i] != '\n')
+		i++;
+	if ((ft_strlen(line) != i + 1 && ft_strchr(line, '\n') != 0) || 
+		(ft_strlen(line) != i && ft_strchr(line, '\n') == 0))
+	{
+		free(result);
+		result = NULL;
+	}
+	free(line);
+	free(stash);
+	return (result);
+}
+
+void	ft_free_splitted(char **splitted)
+{
+	int	i;
+
+	i = 0;
+	while (splitted[i])
+	{
+		free(splitted[i]);
+		i++;
+	}
+	free(splitted);
+}
+
+void	ft_insert(char **splitted, int *line, int row)
+{
 	int	i;
 	int	j;
 
 	i = 0;
 	j = 0;
-	new = *result;
-	while (grid[j][i])
+	while (j < row)
 	{
-		new[j][i] = grid[j][i];
-		if (i == len)
-		{
-			i = 0;
+		if (splitted[i][0] == '\n' || splitted[i] == NULL)
 			j++;
-		}
 		i++;
 	}
+	j = 0;
+	i = 0;
+	while (splitted[i] && splitted[i][0] != '\n')
+	{
+		line[j] = ft_atoi(splitted[i]);
+		j++;
+		i++;
+	}
+	line[j] = -1;
 }
 
-int	*ft_create_grid_line(char ***s)
+int	**ft_transform(char *str, int rows)
 {
+	int	**result;
+	int	i;
+	int	len;
 	char	**splitted;
-	int		*result;
-	int		i;
 
 	i = 0;
-	splitted = *s;
-	while (splitted[i])
+	result = malloc(sizeof(int *) * (rows + 1));
+	splitted = ft_split(str, ' ');
+	while (splitted[i] && splitted[i][0] != '\n')
 		i++;
-	result = malloc(sizeof(int) * i);
+	len = i + 1;
+	free(str);
 	i = 0;
-	while (splitted[i])
+	while (i < rows)
 	{
-		result[i] = ft_atoi(splitted[i]);
-		free(splitted[i]);
+		result[i] = malloc(sizeof(int) * len + 1);
+		ft_insert(splitted, result[i], i);
 		i++;
 	}
-	free(splitted);
+	result[i] = NULL;
+	ft_free_splitted(splitted);
 	return (result);
 }
 
-int	**ft_transform(int ***o_g, char **line, int row)
+void	ft_line_insert(char *line, char *result, int i, int j)
 {
-	int		**grid;
-	char	**splitted;
+	while (line[i])
+	{
+		result[j] = line[i];
+		if ((line[i + 1] == '\n' && line[i] != ' ') ||
+			(line[i + 1] == '\0' && line[i] != ' '))
+		{
+			j++;
+			result[j] = ' ';
+		}
+		j++;
+		i++;
+	}
+	result[j] = '\0';
+}
+char	*ft_line_modify(char *line)
+{
+	char 	*result;
 	int		i;
-	int		**old_grid;
+	int		j;
 
 	i = 0;
-	grid = malloc(sizeof(int *) * row + 1);
-	if (row != 0)
+	j = 0;
+	while (line[i])
 	{
-		old_grid = *o_g;
-		while (i < row)
-		{
-			grid[i] = old_grid[i];
-			i++;
-		}
-		free(old_grid);
+		if ((line[i + 1] == '\n' && line[i] != ' ') ||
+			(line[i + 1] == '\0' && line[i] != ' '))
+			j++;
+		i++;
 	}
-	splitted = ft_split(*line, ' ');
-	free(*line);
-	grid[i] = ft_create_grid_line(&splitted);
-	printf("%d", grid[i][0]);
-	// int	j = 0;
-	// while (grid[i][j])
-	// {
-	// 	printf("%d\n", grid[i][j]);
-	// 	j++;
-	// }
-	// int j = 0;
-	// printf("%d", grid[i][0]);
-	// while (grid[i][j])
-	// {
-		// printf("%d", grid[i][j]);
-	// 	j++;
-	// }
-	return (grid);
+	result = malloc(ft_strlen(line) + 1 + j);
+	ft_line_insert(line, result, 0, 0);
+	free(line);
+	return (result);
 }
 
 int	**ft_initialize(int fd)
 {
 	int	**grid;
 	char	*line;
-	// int		**grid;
+	char	*stash;
 	int		i;
 
-	i = 0;
-	line = "hi";
+	i = -1;
+	stash = NULL;
 	grid = NULL;
-	while (line != NULL)
+	while (fd)
 	{
 		line = get_next_line(fd);
+		if (line == NULL)
+			fd = close(fd);
 		if (line != NULL)
-			grid = ft_transform(&grid, &line, i);
+			stash = ft_join(stash, line);
+		if (stash == NULL)
+			return (NULL);
 		i++;
 	}
-	i = 0;
-	free(line);
-	// if (grid == NULL)
-	// 	return (NULL);
-	// return (grid);
+	stash = ft_line_modify(stash);
+	grid = ft_transform(stash, i);
 	return (grid);
 }
 
@@ -208,7 +251,11 @@ int main(int argc, char **argv)
 	// void *mlx_window;
 	int		fd;
 	int		**grid;
+	int		i;
+	int		j;
 
+	i = 0;
+	j = 0;
 	if (argc != 2)
 		return (0);
 	fd = open(argv[1], O_RDONLY);
@@ -220,6 +267,23 @@ int main(int argc, char **argv)
 	// img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
 	// &img.endian);
 	grid = ft_initialize(fd);
+	if (grid == NULL)
+	{
+		return (0);
+		ft_printf("Map is not properly formatted");
+	}
+	while (grid[i])
+	{
+		while (grid[i][j] != -1)
+		{
+			printf("%d", grid[i][j]);
+			j++;
+		}
+		free(grid[i]);
+		i++;
+		printf("\n");
+		j = 0;
+	}
 	free(grid);
 	// mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	// mlx_loop(mlx);
