@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "./libft/libft.h"
 #include <fcntl.h>
+#include <math.h>
 
 typedef struct	s_data {
 	void	*img;
@@ -14,7 +15,7 @@ typedef struct	s_data {
 typedef struct	s_point {
 	int	x;
 	int	y;
-	// int	z;
+	int	z;
 }t_point;
 
 
@@ -65,35 +66,6 @@ void	ft_draw_straight_line(t_data *img, int dy, char *addr)
 	}
 }
 
-void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr)
-{
-	int	error;
-	int	i;
-	int	sign;
-
-	sign = 1;
-	i = 0;
-	if (dy != 0 && dx != 0 && (dy / dx < 0))
-		sign = -1;
-	if (dy < 0)
-		dy = dy * -1;
-	if (dx < 0)
-		dx = dx * - 1;
-	error = dx / 2;
-	while (i != dx)
-	{
-		addr = addr + (img->bpp / 8);
-		if (error - dy <= 0)
-		{
-			addr += img->ll * sign;
-			error += dx;
-		}
-		ft_mlx_pxl_draw_addr(img, addr, 0x00FFFFFF);
-		i++;
-		error -= dy;
-	}
-}
-
 char	*ft_join(char *stash, char *line)
 {
 	char	*result;
@@ -131,39 +103,30 @@ void	ft_free_splitted(char **splitted)
 	free(splitted);
 }
 
-void	ft_insert(char **splitted, int *line, int row)
+void	ft_insert(char **splitted, t_point *line, int row)
 {
 	int	i;
-	int	j;
 
-	i = 0;
-	j = 0;
-	while (j < row)
-	{
-		if (splitted[i][0] == '\n' || splitted[i] == NULL)
-			j++;
-		i++;
-	}
-	j = 0;
 	i = 0;
 	while (splitted[i] && splitted[i][0] != '\n')
 	{
-		line[j] = ft_atoi(splitted[i]);
-		j++;
+		line[i].y = ft_atoi(splitted[i]);
+		line[i].z = row;
+		line[i].x = i;
 		i++;
 	}
-	line[j] = -1;
+	line[i].x = -1;
 }
 
-int	**ft_transform(char *str, int rows)
+t_point	**ft_transform(char *str, int rows)
 {
-	int	**result;
+	t_point	**result;
 	int	i;
 	int	len;
 	char	**splitted;
 
 	i = 0;
-	result = malloc(sizeof(int *) * (rows + 1));
+	result = malloc(sizeof(t_point *) * (rows + 1));
 	splitted = ft_split(str, ' ');
 	while (splitted[i] && splitted[i][0] != '\n')
 		i++;
@@ -172,8 +135,8 @@ int	**ft_transform(char *str, int rows)
 	i = 0;
 	while (i < rows)
 	{
-		result[i] = malloc(sizeof(int) * len + 1);
-		ft_insert(splitted, result[i], i);
+		result[i] = malloc(sizeof(t_point) * len + 1);
+		ft_insert(splitted + (i * len), result[i], i);
 		i++;
 	}
 	result[i] = NULL;
@@ -181,16 +144,67 @@ int	**ft_transform(char *str, int rows)
 	return (result);
 }
 
+void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr)
+{
+	int	error;
+	int	i;
+	int	sign;
+
+	sign = 1;
+	i = 0;
+	if (dy != 0 && dx != 0 && (dy / dx < 0))
+		sign = -1;
+	if (dy < 0)
+		dy = dy * -1;
+	if (dx < 0)
+		dx = dx * - 1;
+	error = dx / 2;
+	while (i != dx)
+	{
+		addr = addr + (img->bpp / 8);
+		if (error - dy <= 0)
+		{
+			addr += img->ll * sign;
+			error += dx;
+		}
+		ft_mlx_pxl_draw_addr(img, addr, 0x00FFFFFF);
+		i++;
+		error -= dy;
+	}
+}
+
+void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
+{
+	char	*addr;
+
+	if ((p1->x > p2->x) || (p1->x == p2->x && p1->y > p2->y))
+		addr = img->addr + (((img->bpp / 8) * p2->x) + (img->ll * p2->y));
+	else
+		addr = img->addr + (((img->bpp / 8) * p1->x) + (img->ll * p1->y));
+
+	if (p1->x != p2->x)
+		ft_draw_angle_line(img, p1->x - p2->x, p1->y - p2->y, addr);
+	else
+		ft_draw_straight_line(img, p1->y - p2->y, addr);
+}
+
 void	ft_line_insert(char *line, char *result, int i, int j)
 {
 	while (line[i])
 	{
 		result[j] = line[i];
-		if ((line[i + 1] == '\n' && line[i] != ' ') ||
-			(line[i + 1] == '\0' && line[i] != ' '))
+		if (line[i + 1] == '\0' && line[i] != ' ')
 		{
 			j++;
 			result[j] = ' ';
+		}
+		if (line[i + 1] == '\n' && line[i] != ' ')
+		{
+			j = j + 3;
+			result[j - 2] = ' ';
+			result[j - 1] = '\n';
+			result[j] = ' ';
+			i++;
 		}
 		j++;
 		i++;
@@ -200,15 +214,22 @@ void	ft_line_insert(char *line, char *result, int i, int j)
 char	*ft_line_modify(char *line)
 {
 	char 	*result;
-	int		i;
+	int		i;	// int		fd;
+	// t_point	**grid;
+	// int		i;
+	// int		j;
+
+	// i = 0;
+	// j = 0;
 	int		j;
 
 	i = 0;
 	j = 0;
 	while (line[i])
 	{
-		if ((line[i + 1] == '\n' && line[i] != ' ') ||
-			(line[i + 1] == '\0' && line[i] != ' '))
+		if (line[i + 1] == '\n' && line[i] != ' ')
+			j = j + 2;
+		if (line[i + 1] == '\0' && line[i] != ' ')
 			j++;
 		i++;
 	}
@@ -218,13 +239,35 @@ char	*ft_line_modify(char *line)
 	return (result);
 }
 
-int	ft_iso_proj(int x, int y, int z)
+void	ft_vectorize(t_point *point, int dist, t_point start)
 {
-	
+	point->x = point->x * dist + start.x;
+	point->y = point->y * dist + start.y;
+	point->z = point->z * dist;
 }
 
-// start at [50][50]
-void	ft_coordinates(int	**grid)
+void	ft_iso_proj(t_point *p)
+{
+	double x;
+	double y;
+	double	ang;
+
+	ang = (26.57 * 3.14) / 180;
+	x = (double)p->x;
+	y = (double)p->y;
+	x = x * cos((45 * 3.14) / 180);
+	y = x * sin((35.264 * 3.14) / 180);
+	if (fmod(x, 1.0) >= 0.5)
+		p->x = (int)x + 1;
+	else
+		p->x = (int)x;
+	if (fmod(y, 1.0) >= 0.5)
+		p->y = (int)y + 1;
+	else
+		p->y = (int)y;
+}
+
+void	ft_coordinates(t_point	**grid)
 {
 	int	row;
 	int	len;
@@ -234,19 +277,24 @@ void	ft_coordinates(int	**grid)
 	len = 0;
 	while (grid[row])
 		row++;
-	while (grid[row - 1][len] != -1)
+	while (grid[row - 1][len].x != -1)
 		len++;
 	if (row > len)
 		dist = 600 / row;
 	else
 		dist = 600 / len;
-	len = 0;
+	len = (700 - ((len - 1) * dist)) / 2;
+	row = (700 - ((row - 1) * dist)) / 2;
+	grid[0][0].x = len;
+	grid[0][0].y = row;
 	row = 0;
+	len = 1;
 	while (grid[row])
 	{
-		while (grid[row][len])
+		while (grid[row][len].x != -1)
 		{
-			grid[row][len] = ft_iso_proj(len, row, grid[row][len]);
+			ft_vectorize(&grid[row][len], dist, grid[0][0]);
+			ft_iso_proj(&grid[row][len]);
 			len++;
 		}
 		row++;
@@ -254,9 +302,9 @@ void	ft_coordinates(int	**grid)
 	}
 }
 
-int	**ft_initialize(int fd)
+t_point **ft_initialize(int fd)
 {
-	int	**grid;
+	t_point	**grid;
 	char	*line;
 	char	*stash;
 	int		i;
@@ -277,17 +325,17 @@ int	**ft_initialize(int fd)
 	}
 	stash = ft_line_modify(stash);
 	grid = ft_transform(stash, i);
-	// ft_coordinates(grid);
+	ft_coordinates(grid);
 	return (grid);
 }
 
 int main(int argc, char **argv)
 {
-	// void *mlx;
-	// t_data img;
-	// void *mlx_window;
+	void *mlx;
+	t_data img;
+	void *mlx_window;
 	int		fd;
-	int		**grid;
+	t_point	**grid;
 	int		i;
 	int		j;
 
@@ -298,40 +346,36 @@ int main(int argc, char **argv)
 	fd = open(argv[1], O_RDONLY);
 	if (fd < 0)
 		return (0);
-	// mlx = mlx_init();
-	// mlx_window = mlx_new_window(mlx, 700, 700, "hi");
-	// img.img = mlx_new_image(mlx, 700, 700);
-	// img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
-	// &img.endian);
+	mlx = mlx_init();
+	img.img = mlx_new_image(mlx, 700, 700);
+	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
+	&img.endian);
+	mlx_window = mlx_new_window(mlx, 700, 700, "hi");
 	grid = ft_initialize(fd);
-	if (grid == NULL)
+	if (!grid)
 	{
+		printf("map not properly formatted");
 		return (0);
-		ft_printf("Map is not properly formatted");
 	}
-	while (grid[i] && grid[i][j] != -1)
-	{
-		if (grid[i][j + 1] == -1 && grid[i + 1])
-		{
-			printf("%d\n", grid[i][j]);
-			i++;
-			j = 0;
-		}
-		printf("%d", grid[i][j]);
-		j++;
-	}
+	// printf("p1 : (x : %d y : %d z = %d)\np2 : (x : %d y : %d z = %d)\n", grid[0][0].x,grid[0][0].y,grid[0][0].z,grid[0][1].x,grid[0][1].y,grid[0][1].z);
+	// ft_draw_line(&img, &grid[0][0], &grid[0][1]);
+	// ft_mlx_pxl_draw_pos(&img, grid[0][1].x, grid[0][1].y, 0x00FF0000);
 	while (grid[i])
 	{
-		while (grid[i][j])
+		while (grid[i][j].x != -1)
 		{
-			printf("%d", grid[i][j]);
+			if (grid[i][j + 1].x != -1)
+				ft_draw_line(&img, &grid[i][j], &grid[i][j + 1]);
+			if (grid[i + 1])
+				ft_draw_line(&img, &grid[i][j], &grid[i + 1][j]);
+			printf("x : %d y : %d z : %d\n", grid[i][j].x, grid[i][j].y, grid[i][j].z);
 			j++;
 		}
-		printf("\n");
+		printf("(x : %d)", grid[i][j].x);
 		j = 0;
 		i++;
+		printf("\n");
 	}
-	free(grid);
-	// mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
-	// mlx_loop(mlx);
+	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
+	mlx_loop(mlx);
 }
