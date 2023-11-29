@@ -110,8 +110,8 @@ void	ft_insert(char **splitted, t_point *line, int row)
 	i = 0;
 	while (splitted[i] && splitted[i][0] != '\n')
 	{
-		line[i].y = ft_atoi(splitted[i]);
-		line[i].z = row;
+		line[i].z = ft_atoi(splitted[i]);
+		line[i].y = row;
 		line[i].x = i;
 		i++;
 	}
@@ -241,30 +241,20 @@ char	*ft_line_modify(char *line)
 
 void	ft_vectorize(t_point *point, int dist, t_point start)
 {
-	point->x = point->x * dist + start.x;
-	point->y = point->y * dist + start.y;
-	point->z = point->z * dist;
+	point->x = point->x * 10;
+	point->y = point->y * 10;
+	point->z = point->z * 10;
 }
 
 void	ft_iso_proj(t_point *p)
 {
-	double x;
-	double y;
-	double	ang;
+	int	new_x;
+	int	new_y;
 
-	ang = (26.57 * 3.14) / 180;
-	x = (double)p->x;
-	y = (double)p->y;
-	x = x * cos((45 * 3.14) / 180);
-	y = x * sin((35.264 * 3.14) / 180);
-	if (fmod(x, 1.0) >= 0.5)
-		p->x = (int)x + 1;
-	else
-		p->x = (int)x;
-	if (fmod(y, 1.0) >= 0.5)
-		p->y = (int)y + 1;
-	else
-		p->y = (int)y;
+	new_x = (p->x - p->y) * cos(0.8);
+	new_y = (p->x + p->y) * sin(0.8) + p->z;
+	p->x = new_x;
+	p->y = new_y;
 }
 
 void	ft_coordinates(t_point	**grid)
