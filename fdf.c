@@ -3,6 +3,8 @@
 #include "./libft/libft.h"
 #include <fcntl.h>
 #include <math.h>
+#define RAD 0.785398
+#define RAD2  0.615473
 
 typedef struct	s_data {
 	void	*img;
@@ -13,11 +15,11 @@ typedef struct	s_data {
 }t_data;
 
 typedef struct	s_point {
-	int	x;
-	int	y;
-	int	z;
+	double	x;
+	double	y;
+	double	z;
+	int		end;
 }t_point;
-
 
 void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
 {
@@ -113,9 +115,10 @@ void	ft_insert(char **splitted, t_point *line, int row)
 		line[i].z = ft_atoi(splitted[i]);
 		line[i].y = row;
 		line[i].x = i;
+		line[i].end = 1;
 		i++;
 	}
-	line[i].x = -1;
+	line[i].end = 0;
 }
 
 t_point	**ft_transform(char *str, int rows)
@@ -142,50 +145,6 @@ t_point	**ft_transform(char *str, int rows)
 	result[i] = NULL;
 	ft_free_splitted(splitted);
 	return (result);
-}
-
-void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr)
-{
-	int	error;
-	int	i;
-	int	sign;
-
-	sign = 1;
-	i = 0;
-	if (dy != 0 && dx != 0 && (dy / dx < 0))
-		sign = -1;
-	if (dy < 0)
-		dy = dy * -1;
-	if (dx < 0)
-		dx = dx * - 1;
-	error = dx / 2;
-	while (i != dx)
-	{
-		addr = addr + (img->bpp / 8);
-		if (error - dy <= 0)
-		{
-			addr += img->ll * sign;
-			error += dx;
-		}
-		ft_mlx_pxl_draw_addr(img, addr, 0x00FFFFFF);
-		i++;
-		error -= dy;
-	}
-}
-
-void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
-{
-	char	*addr;
-
-	if ((p1->x > p2->x) || (p1->x == p2->x && p1->y > p2->y))
-		addr = img->addr + (((img->bpp / 8) * p2->x) + (img->ll * p2->y));
-	else
-		addr = img->addr + (((img->bpp / 8) * p1->x) + (img->ll * p1->y));
-
-	if (p1->x != p2->x)
-		ft_draw_angle_line(img, p1->x - p2->x, p1->y - p2->y, addr);
-	else
-		ft_draw_straight_line(img, p1->y - p2->y, addr);
 }
 
 void	ft_line_insert(char *line, char *result, int i, int j)
@@ -239,53 +198,80 @@ char	*ft_line_modify(char *line)
 	return (result);
 }
 
-void	ft_vectorize(t_point *point, int dist, t_point start)
+void	ft_iso(t_point *p)
 {
-	point->x = point->x * dist + 175;
-	point->y = (point->y * dist + 175);
-	point->z = point->z * dist;
+	double x;
+	double	y;
+	double	z;
+
+	/*rotation around vertical axis*/
+	x = cos(RAD) * p->x - sin(RAD) * p->y;
+	y = sin(RAD) * p->x + cos(RAD) * p->y;
+	p->x = x;
+	/*rotation around horizontal axis*/
+	y = cos(RAD2) * y - sin(RAD2) * p->z;
+	z = sin(RAD2) * y + cos(RAD2) * p->z;
+	p->z = z;
 }
 
-void	ft_iso_proj(t_point *p)
+void	ft_round(double *num)
 {
-	int	new_x;
-	int	new_y;
+	if (*num - (int)*num > 0.5)
+		*num = (int)*num + 1;
+	else
+		*num = (int)*num;
 
-	new_x = (p->x - p->y) * cos(0.8);
-	new_y = (p->x + p->y) * sin(0.8) + p->z;
-	p->x = new_x - 350;
-	p->y = new_y;
+}
+
+void	ft_vectorize(t_point **grid, int row, int ll)
+{
+	int	len;
+	int	height;
+
+	if (grid[row][ll].z > grid[0][ll].x * 2)
+		len = 500 / grid[row][ll].z;
+	else
+		len = 500 / (grid[0][ll].x * 2);
+	height = grid[row][ll].z / 2 * len;
+	row = 0;
+	ll = 0;
+	while (grid[row])
+	{
+		while (grid[row][ll].end)
+		{
+			grid[row][ll].x = (grid[row][ll].x * len) + 350;
+			grid[row][ll].z = (grid[row][ll].z * len) - height + 350;
+			grid[row][ll].y *= len;
+			ft_round(&grid[row][ll].x);
+			ft_round(&grid[row][ll].y);
+			ft_round(&grid[row][ll].z);
+			ll++;
+		}
+		row++;
+		ll = 0;
+	}
 }
 
 void	ft_coordinates(t_point	**grid)
 {
 	int	row;
-	int	len;
-	int	dist;
+	int	line;
+	int	ll;
 
 	row = 0;
-	len = 0;
-	while (grid[row])
-		row++;
-	while (grid[row - 1][len].x != -1)
-		len++;
-	if (row > len)
-		dist = 400 / row;
-	else
-		dist = 400 / len;
-	row = 0;
-	len = 0;
+	line = 0;
 	while (grid[row])
 	{
-		while (grid[row][len].x != -1)
+		while (grid[row][line].end)
 		{
-			ft_vectorize(&grid[row][len], dist, grid[0][0]);
-			ft_iso_proj(&grid[row][len]);
-			len++;
+			ft_iso(&grid[row][line]);
+			line++;
 		}
 		row++;
-		len = 0;
+		ll = line;
+		line = 0;
 	}
+	ft_vectorize(grid, row - 1, ll - 1);
 }
 
 t_point **ft_initialize(int fd)
@@ -313,6 +299,39 @@ t_point **ft_initialize(int fd)
 	grid = ft_transform(stash, i);
 	ft_coordinates(grid);
 	return (grid);
+}
+
+int	ft_pos(int	num)
+{
+	if (num < 0)
+		return (num * -1);
+	else
+		return (num);
+}
+
+	// ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
+	// ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
+
+void	ft_draw_line(t_data *img, t_point *p1, t_point *p2, int color)
+{
+	char	*addr;
+	int		sign;
+	int		p;
+
+	sign = 1;
+	p = 2;
+	if (p1->x > p2->x)
+	{
+		addr = img->addr + (((img->bpp / 8) * (int)p2->x) + (img->ll * (int)p2->z));
+		p = 1;
+	}
+	else
+		addr = img->addr + (((img->bpp / 8) * (int)p1->x) + (img->ll * (int)p1->z));
+	if (p = 1 && )
+	if (p1->x != p2->x)
+		ft_draw_angle_line(img, ft_pos(p1->x - p2->x), ft_pos(p1->z - p2->z), addr, sign, color);
+	else
+		ft_draw_straight_line(img, p1->z - p2->z, addr);
 }
 
 int main(int argc, char **argv)
@@ -343,25 +362,24 @@ int main(int argc, char **argv)
 		printf("map not properly formatted");
 		return (0);
 	}
-	// printf("p1 : (x : %d y : %d z = %d)\np2 : (x : %d y : %d z = %d)\n", grid[0][0].x,grid[0][0].y,grid[0][0].z,grid[0][1].x,grid[0][1].y,grid[0][1].z);
-	// ft_draw_line(&img, &grid[0][0], &grid[0][1]);
-	// ft_mlx_pxl_draw_pos(&img, grid[0][1].x, grid[0][1].y, 0x00FF0000);
 	while (grid[i])
 	{
-		while (grid[i][j].x != -1)
+		while (grid[i][j].end)
 		{
-			if (grid[i][j + 1].x != -1)
-				ft_draw_line(&img, &grid[i][j], &grid[i][j + 1]);
+			if (grid[i][j + 1].end)
+				ft_draw_line(&img, &grid[i][j], &grid[i][j + 1], 0x00FFFFFF);
 			if (grid[i + 1])
-				ft_draw_line(&img, &grid[i][j], &grid[i + 1][j]);
-			printf("x : %d y : %d z : %d\n", grid[i][j].x, grid[i][j].y, grid[i][j].z);
+				ft_draw_line(&img, &grid[i][j], &grid[i + 1][j], 0x00FFFFFF);
+			printf("x : %f y : %f z : %f\n", grid[i][j].x, grid[i][j].y, grid[i][j].z);
 			j++;
 		}
-		printf("(x : %d)", grid[i][j].x);
+		printf("(x : %d)", grid[i][j].end);
 		j = 0;
 		i++;
 		printf("\n");
 	}
+	ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
+	ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
 	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	mlx_loop(mlx);
 }
