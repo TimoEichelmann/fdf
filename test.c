@@ -13,16 +13,6 @@ typedef struct	s_point {
 	double	z;
 }t_point;
 
-void	ft_draw_low_line(t_data *img, int dx, int dy, char *addr, int sign, int color)
-{
-	double	error;
-	int	i;
-
-	i = 0;
-	error = dy / 2;
-
-}
-
 void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
 {
 	char 	*pxl;
@@ -40,77 +30,75 @@ void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
 	}
 }
 
-typedef struct s_plot {
-	int	x;
-	int	z;
-	int d1;
-	int	d2;
-}t_plot;
-
-void	ft_plot(t_point *plot, t_point *p1, t_point *p2)
+void	ft_plot(t_point *plot, t_point *p1, t_point *p2, char ind, int *sign)
 {
-	plot->d1 = ft_pos(p1->z - p2->z) * -1;
-	plot->d2 = p1->x - p2->x;
-	plot->x = p1.x;
-	plot->z = p1.z;
-	if (p1.x > p2.x)
+	plot->x = p1->x;
+	plot->z = p1->z;
+	if ((c == 'l' && p2->z > p1->z) || (c == 'h' && p2->x < p1->x))
+		*sign = -1;
+	if ((p2.x < p1.x && c == 'l') || (p2.z < p1.z && c == 'h'))
 	{
 		plot->x = p2.x;
 		plot->z = p2.z;
+		if ((c == 'l' && p1->z > p2->z) || (c == 'h' && p1->x < p2->x))
+			*sign = -1;
 	}
-	if (ft_pos(p1->x - p2->x) > ft_pos(p1->z - p2->z))
+}
+
+void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
+{
+	int	error;
+	int	i;
+	int sign;
+	t_point plot;
+
+	sign = 1;
+	ft_plot(&plot, p1, p2, 'h', &sign);
+	i = 0;
+	error = ft_pos(p1.z - p2.z) / 2;
+	while (i != ft_pos(p1.z - p2.z))
 	{
-		plot->d1 = p1->x - p2->x;
-		plot->d2 = ft_pos(p1->z - p2->z) * -1;
+		if (error - ft_pos(p1.x - p2.x) <= 0)
+		{
+			plot.z += (1 * sign);
+			error += ft_pos(p1.z - p2.z);
+		}
+		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, color);
+		i++;
+		plot.x++;
+		error -= ft_pos(p1.z - p2.z);
+	}
+}
+
+void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2, int bd)
+{
+	int	error;
+	int	i;
+	int sign;
+	t_point plot;
+
+	sign = 1;
+	ft_plot(&plot, p1, p2, 'l', &sign);
+	i = 0;
+	error = ft_pos(p1.x - p2.x) / 2;
+	while (i != ft_pos(p1.x - p2.x))
+	{
+		if (error - ft_pos(p1.z - p2.z) <= 0)
+		{
+			plot.z += (1 * sign);
+			error += ft_pos(p1.x - p2.x);
+		}
+		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, color);
+		i++;
+		plot.x++;
+		error -= ft_pos(p1.x - p2.x);
 	}
 }
 
 void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
 {
-	int	error;
-	int	i;
-	t_plot plot;
-	int	*fast;
-	int	*slow;
-
-	ft_plot(plot, p1, p2);
-	error = plot.d1 / 2;
-	while (i != ft_pos(plot.d1))
-	{
-		if (error - plot.d2 <= 0)
-		{
-			slow++;
-			error += plot.d1;
-		}
-		ft_mlx_pxl_draw_pos(img, plot.x, ft_pos(plot.z), color);
-		i++;
-		error -= plot.d2;
-		fast++;
-	}
-}
-
-void	ft_draw_angle_line(t_data *img, int dx, int dy, char *addr, int sign, int color)
-{
-	double	error;
-	int	i;
-
-	i = 0;
-	if (dx < dy)
-	{
-		ft_draw_low_line(img, dx, dy, addr, sign, color);
-		return ;
-	}
-	error = dx / 2;
-	while (i != dx)
-	{
-		if (error - dy <= 0)
-		{
-			addr += (img->ll * sign);
-			error += dx;
-		}
-		ft_mlx_pxl_draw_addr(img, addr, color);
-		i++;
-		addr = addr + (img->bpp / 8);
-		error -= dy;
-	}
+	if (ft_pos(p1.x - p2.x) > ft_pos(p1.z - p2.z))
+		ft_draw_low_line(&img, p1, p2);
+	else
+		ft_draw_high_line(&img, p1, p2);
 }

@@ -1,8 +1,9 @@
-#include <mlx.h>
+// #include <mlx.h>
 #include <stdlib.h>
-#include "./libft/libft.h"
+// #include "./libft/libft.h"
 #include <fcntl.h>
 #include <math.h>
+#include <stdio.h>
 #define RAD 0.785398
 #define RAD2  0.615473
 
@@ -297,7 +298,7 @@ t_point **ft_initialize(int fd)
 	}
 	stash = ft_line_modify(stash);
 	grid = ft_transform(stash, i);
-	ft_coordinates(grid);
+	// ft_coordinates(grid);
 	return (grid);
 }
 
@@ -311,28 +312,6 @@ int	ft_pos(int	num)
 
 	// ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
 	// ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
-
-void	ft_draw_line(t_data *img, t_point *p1, t_point *p2, int color)
-{
-	char	*addr;
-	int		sign;
-	int		p;
-
-	sign = 1;
-	p = 2;
-	if (p1->x > p2->x)
-	{
-		addr = img->addr + (((img->bpp / 8) * (int)p2->x) + (img->ll * (int)p2->z));
-		p = 1;
-	}
-	else
-		addr = img->addr + (((img->bpp / 8) * (int)p1->x) + (img->ll * (int)p1->z));
-	if (p = 1 && )
-	if (p1->x != p2->x)
-		ft_draw_angle_line(img, ft_pos(p1->x - p2->x), ft_pos(p1->z - p2->z), addr, sign, color);
-	else
-		ft_draw_straight_line(img, p1->z - p2->z, addr);
-}
 
 int main(int argc, char **argv)
 {
@@ -351,11 +330,11 @@ int main(int argc, char **argv)
 	fd = open(argv[1], O_RDONLY);
 	if (fd < 0)
 		return (0);
-	mlx = mlx_init();
-	img.img = mlx_new_image(mlx, 700, 700);
-	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
-	&img.endian);
-	mlx_window = mlx_new_window(mlx, 700, 700, "hi");
+	// mlx = mlx_init();
+	// img.img = mlx_new_image(mlx, 700, 700);
+	// img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
+	// &img.endian);
+	// mlx_window = mlx_new_window(mlx, 700, 700, "hi");
 	grid = ft_initialize(fd);
 	if (!grid)
 	{
@@ -366,20 +345,19 @@ int main(int argc, char **argv)
 	{
 		while (grid[i][j].end)
 		{
-			if (grid[i][j + 1].end)
-				ft_draw_line(&img, &grid[i][j], &grid[i][j + 1], 0x00FFFFFF);
-			if (grid[i + 1])
-				ft_draw_line(&img, &grid[i][j], &grid[i + 1][j], 0x00FFFFFF);
+			// if (grid[i][j + 1].end)
+			// 	ft_draw_line(&img, &grid[i][j], &grid[i][j + 1], 0x00FFFFFF);
+			// if (grid[i + 1])
+			// 	ft_draw_line(&img, &grid[i][j], &grid[i + 1][j], 0x00FFFFFF);
 			printf("x : %f y : %f z : %f\n", grid[i][j].x, grid[i][j].y, grid[i][j].z);
 			j++;
 		}
-		printf("(x : %d)", grid[i][j].end);
 		j = 0;
 		i++;
 		printf("\n");
 	}
-	ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
-	ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
-	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
-	mlx_loop(mlx);
+	// ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
+	// ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
+	// mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
+	// mlx_loop(mlx);
 }
