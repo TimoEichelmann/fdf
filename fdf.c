@@ -1,26 +1,16 @@
-// #include <mlx.h>
-#include <stdlib.h>
-// #include "./libft/libft.h"
-#include <fcntl.h>
-#include <math.h>
-#include <stdio.h>
-#define RAD 0.785398
-#define RAD2  0.615473
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   fdf.c                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: teichelm <teichelm@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/01/09 14:16:13 by teichelm          #+#    #+#             */
+/*   Updated: 2024/01/09 17:23:19 by teichelm         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-typedef struct	s_data {
-	void	*img;
-	char	*addr;
-	int		bpp;
-	int		ll;
-	int		endian;
-}t_data;
-
-typedef struct	s_point {
-	double	x;
-	double	y;
-	double	z;
-	int		end;
-}t_point;
+#include "fdf.h"
 
 void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
 {
@@ -51,21 +41,6 @@ void	ft_mlx_pxl_draw_addr(t_data *img, char *addr, int color)
 		else
 			*addr++ = (color >> ((img->bpp - 8) - i)) & 0xFF;
 		i = i - 8;
-	}
-}
-
-void	ft_draw_straight_line(t_data *img, int dy, char *addr)
-{
-	int	i;
-
-	i = 0;
-	if (dy < 0)
-		dy *= -1;
-	while (i < dy)
-	{
-		addr += img->ll;
-		i++;
-		ft_mlx_pxl_draw_addr(img, addr, 0x00FFFFFF);
 	}
 }
 
@@ -113,9 +88,10 @@ void	ft_insert(char **splitted, t_point *line, int row)
 	i = 0;
 	while (splitted[i] && splitted[i][0] != '\n')
 	{
-		line[i].z = ft_atoi(splitted[i]);
+		line[i].z = -ft_atoi(splitted[i]);
 		line[i].y = row;
 		line[i].x = i;
+		line[i].height = ft_atoi(splitted[i]);
 		line[i].end = 1;
 		i++;
 	}
@@ -171,6 +147,7 @@ void	ft_line_insert(char *line, char *result, int i, int j)
 	}
 	result[j] = '\0';
 }
+
 char	*ft_line_modify(char *line)
 {
 	char 	*result;
@@ -215,12 +192,12 @@ void	ft_iso(t_point *p)
 	p->z = z;
 }
 
-void	ft_round(double *num)
+double	ft_round(double num)
 {
-	if (*num - (int)*num > 0.5)
-		*num = (int)*num + 1;
+	if (num - (int)num > 0.5)
+		return ((int)num + 1);
 	else
-		*num = (int)*num;
+		return ((int)num);
 
 }
 
@@ -240,12 +217,9 @@ void	ft_vectorize(t_point **grid, int row, int ll)
 	{
 		while (grid[row][ll].end)
 		{
-			grid[row][ll].x = (grid[row][ll].x * len) + 350;
-			grid[row][ll].z = (grid[row][ll].z * len) - height + 350;
+			grid[row][ll].x = ft_round((grid[row][ll].x * len) + 350);
+			grid[row][ll].z = ft_round((grid[row][ll].z * len) - height + 350);
 			grid[row][ll].y *= len;
-			ft_round(&grid[row][ll].x);
-			ft_round(&grid[row][ll].y);
-			ft_round(&grid[row][ll].z);
 			ll++;
 		}
 		row++;
@@ -275,6 +249,48 @@ void	ft_coordinates(t_point	**grid)
 	ft_vectorize(grid, row - 1, ll - 1);
 }
 
+void	ft_max_height(t_point **grid, int max)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+	while (grid[i])
+	{
+		while (grid[i][j].end)
+		{
+			grid[i][j].max_height = max_height;
+			j++;
+		}
+		j = 0;
+		i++;
+	}
+}
+
+void	ft_gradient(t_point **grid)
+{
+	int	i;
+	int	j;
+	int	max_height;
+
+	max_height = 0;
+	i = 0;
+	j = 0;
+	while (grid[i])
+	{
+		while (grid[i][j].end)
+		{
+			if (max_height < grid[i][j].height)
+				max_height = grid[i][j].height;
+			j++;
+		}
+		j = 0;
+		i++;
+	}
+	ft_max_height(grid, max_height);
+}
+
 t_point **ft_initialize(int fd)
 {
 	t_point	**grid;
@@ -298,20 +314,10 @@ t_point **ft_initialize(int fd)
 	}
 	stash = ft_line_modify(stash);
 	grid = ft_transform(stash, i);
-	// ft_coordinates(grid);
+	ft_coordinates(grid);
+	ft_gradient(grid);
 	return (grid);
 }
-
-int	ft_pos(int	num)
-{
-	if (num < 0)
-		return (num * -1);
-	else
-		return (num);
-}
-
-	// ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
-	// ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
 
 int main(int argc, char **argv)
 {
@@ -330,11 +336,11 @@ int main(int argc, char **argv)
 	fd = open(argv[1], O_RDONLY);
 	if (fd < 0)
 		return (0);
-	// mlx = mlx_init();
-	// img.img = mlx_new_image(mlx, 700, 700);
-	// img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
-	// &img.endian);
-	// mlx_window = mlx_new_window(mlx, 700, 700, "hi");
+	mlx = mlx_init();
+	img.img = mlx_new_image(mlx, 700, 700);
+	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.ll,
+	&img.endian);
+	mlx_window = mlx_new_window(mlx, 700, 700, "hi");
 	grid = ft_initialize(fd);
 	if (!grid)
 	{
@@ -345,19 +351,17 @@ int main(int argc, char **argv)
 	{
 		while (grid[i][j].end)
 		{
-			// if (grid[i][j + 1].end)
-			// 	ft_draw_line(&img, &grid[i][j], &grid[i][j + 1], 0x00FFFFFF);
-			// if (grid[i + 1])
-			// 	ft_draw_line(&img, &grid[i][j], &grid[i + 1][j], 0x00FFFFFF);
-			printf("x : %f y : %f z : %f\n", grid[i][j].x, grid[i][j].y, grid[i][j].z);
+			if (grid[i][j + 1].end)
+				ft_draw_line(&img, &grid[i][j], &grid[i][j + 1]);
+			if (grid[i + 1])
+				ft_draw_line(&img, &grid[i][j], &grid[i + 1][j]);
+			printf("x : %f y : %f z : %f height : %f max : %f\n", grid[i][j].x, grid[i][j].y, grid[i][j].z, grid[i][j].height, grid[i][j].max_height);
 			j++;
 		}
 		j = 0;
 		i++;
 		printf("\n");
 	}
-	// ft_draw_line(&img, &grid[1][1], &grid[2][1], 0x00FF00FF);
-	// ft_draw_line(&img, &grid[1][1], &grid[1][2], 0x00FF00FF);
-	// mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
-	// mlx_loop(mlx);
+	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
+	mlx_loop(mlx);
 }
