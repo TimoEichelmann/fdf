@@ -32,29 +32,18 @@ void	ft_plot(t_point *plot, t_point *p1, char ind)
 		plot->z++;
 }
 
-void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
+int	ft_color(double color, t_point *p1, t_point *p2, char ind)
 {
-	int	error;
-	int sign;
-	t_point plot;
-
-	sign = 1;
-	if (p2->x - p1->x < 0)
-		sign = -1;
-	error = (2 * ft_pos(p2->x - p1->x)) - (p2->z - p1->z);
-	ft_plot(&plot, p1, 'h');
-	while (plot.z != p2->z)
+	if (ind == 'l')
 	{
-		if (error > 0)
+		if (p1->height == p2->height)
 		{
-			plot.height += (p1->height / p2->height);
-			plot.x += sign;
-			error += (2 * ((ft_pos(p2->x - p1->x)) - (p2->z - p1->z)));
+			if (p1->height != 0)
+				return (color + (255.0 / (p1->height / p1->max_height)));
+			else
+				return (color);
 		}
-		else
-			error += 2 * ft_pos(p2->x - p1->x);
-		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, 0x00FF0000);
-		plot.z++;
+		return (color);
 	}
 }
 
@@ -63,8 +52,10 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 	int	error;
 	int sign;
 	t_point plot;
+	double	color;
 
 	sign = 1;
+	color = 0x00FFFF00;
 	if (p2->z - p1->z < 0)
 		sign = -1;
 	error = (2 * ft_pos(p2->z - p1->z)) - (p2->x - p1->x);
@@ -75,29 +66,57 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 		{
 			plot.z += sign;
 			error += (2 * ((ft_pos(p2->z - p1->z)) - (p2->x - p1->x)));
+			if (p1->height != p2->height)
+				color += -sign * ((255.0) / ft_pos(p1->z - p2->z));
 		}
 		else
 			error += 2 * ft_pos(p2->z - p1->z);
-		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, 0x00FF0000);
+		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, ft_color(color, p1, p2, 'l'));
 		plot.x++;
 	}
 }
 
-int	ft_color(t_point *plot)
+void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
 {
-	int	color;
-	
-	color = 0x000000FF;
-	if (plot->height == -1)
+	int	error;
+	int sign;
+	t_point plot;
+	double	color;
+
+	sign = 1;
+	color = 0x00FFFFFF;
+	if (p2->x - p1->x < 0)
+		sign = -1;
+	error = (2 * ft_pos(p2->x - p1->x)) - (p2->z - p1->z);
+	ft_plot(&plot, p1, 'h');
+	while (plot.z != p2->z)
 	{
-		return (color - ft_round(255 / plot->max_height));
+		if (error > 0)
+		{
+			plot.x += sign;
+			error += (2 * ((ft_pos(p2->x - p1->x)) - (p2->z - p1->z)));
+		}
+		else
+			error += 2 * ft_pos(p2->x - p1->x);
+		if (p1->height != p2->height)
+			color -= 255.0 / ft_pos(p1->z - p2->z);
+		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, color/*ft_color(&plot)*/);
+		plot.z++;
 	}
 }
 
+// int	ft_color(t_point *plot)
+// {
+// 	int	color;
+	
+// 	color = 0x000000FF;
+// 	plot->height
+// }
+
 void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
 {
-	ft_mlx_pxl_draw_pos(img, p1->x, p1->z, ft_color(p1));
-	ft_mlx_pxl_draw_pos(img, p2->x, p2->z, ft_color(p1));
+	ft_mlx_pxl_draw_pos(img, p1->x, p1->z, 0x0000FFFF);
+	ft_mlx_pxl_draw_pos(img, p2->x, p2->z, 0x000000FF);
 	if (ft_pos(p2->z - p1->z) < ft_pos(p2->x - p1->x))
 	{
 		if (p1->x > p2->x)

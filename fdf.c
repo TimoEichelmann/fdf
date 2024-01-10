@@ -260,7 +260,7 @@ void	ft_max_height(t_point **grid, int max)
 	{
 		while (grid[i][j].end)
 		{
-			grid[i][j].max_height = max_height;
+			grid[i][j].max_height = max;
 			j++;
 		}
 		j = 0;

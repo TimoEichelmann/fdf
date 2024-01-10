@@ -34,8 +34,8 @@ typedef struct	s_point {
 	double	x;
 	double	y;
 	double	z;
-	double	hight;
-	double	max_hight;
+	double	height;
+	double	max_height;
 	int		end;
 }t_point;
 
