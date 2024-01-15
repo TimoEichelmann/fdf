@@ -205,19 +205,23 @@ void	ft_vectorize(t_point **grid, int row, int ll)
 {
 	int	len;
 	int	height;
+	double	total;
 
 	if (grid[row][ll].z > grid[0][ll].x * 2)
-		len = 500 / grid[row][ll].z;
+		len = 400 / grid[row][ll].z;
 	else
-		len = 500 / (grid[0][ll].x * 2);
+		len = 400 / (grid[0][ll].x * 2);
 	height = grid[row][ll].z / 2 * len;
+	printf("%f %f\n", grid[0][ll].x, grid[row][0].x);
+	total = ft_pos((ft_pos(grid[0][ll].x * len) - ft_pos(grid[row][0].x * len)));
+	printf("%f", total);
 	row = 0;
 	ll = 0;
 	while (grid[row])
 	{
 		while (grid[row][ll].end)
 		{
-			grid[row][ll].x = ft_round((grid[row][ll].x * len) + 350);
+			grid[row][ll].x = ft_round((grid[row][ll].x * len) + 350 + total / 2);
 			grid[row][ll].z = ft_round((grid[row][ll].z * len) - height + 350);
 			grid[row][ll].y *= len;
 			ll++;
@@ -319,6 +323,27 @@ t_point **ft_initialize(int fd)
 	return (grid);
 }
 
+void	ft_free(t_point **grid)
+{
+	int	i;
+	int	j;
+	t_point *p;
+
+	i = 0;
+	j = 0;
+	while (grid[i])
+	{
+		while (grid[i][j].end)
+		{
+			free(&grid[i][j]);
+			j++;
+		}
+		free(&grid[i]);
+		i++;
+		j = 0;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	void *mlx;
@@ -355,13 +380,16 @@ int main(int argc, char **argv)
 				ft_draw_line(&img, &grid[i][j], &grid[i][j + 1]);
 			if (grid[i + 1])
 				ft_draw_line(&img, &grid[i][j], &grid[i + 1][j]);
-			printf("x : %f y : %f z : %f height : %f max : %f\n", grid[i][j].x, grid[i][j].y, grid[i][j].z, grid[i][j].height, grid[i][j].max_height);
+			// printf("x : %f y : %f z : %f height : %f max : %f\n", grid[i][j].x, grid[i][j].y, grid[i][j].z, grid[i][j].height, grid[i][j].max_height);
 			j++;
 		}
 		j = 0;
 		i++;
 		printf("\n");
 	}
+	i = 0;
+	j = 0;
+	// ft_free(grid);
 	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	mlx_loop(mlx);
 }

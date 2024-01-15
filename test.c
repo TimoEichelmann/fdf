@@ -7,6 +7,25 @@
 #include <unistd.h>
 #include "fdf.h"
 
+#include "fdf.h"
+
+void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
+{
+	char 	*pxl;
+	int		i;
+
+	i = img->bpp - 8;
+	pxl = img->addr + (((img->bpp / 8) * x) + (img->ll * y));
+	while (i >= 0)
+	{
+		if (img->endian == 1)
+			*pxl++ = (color >> i) & 0xFF;
+		else
+			*pxl++ = (color >> ((img->bpp - 8) - i)) & 0xFF;
+		i = i - 8;
+	}
+}
+
 int	ft_pos(int	num)
 {
 	if (num < 0)
@@ -27,30 +46,22 @@ void	ft_plot(t_point *plot, t_point *p1, char ind)
 		plot->z++;
 }
 
-void	ft_mlx_pxl_draw_pos(t_data *img, int x, int y, int color)
+int	ft_color(int sign, t_point *p1, t_point *p2, char ind)
 {
-	char 	*pxl;
-	int		i;
-
-	i = img->bpp - 8;
-	pxl = img->addr + (((img->bpp / 8) * x) + (img->ll * y));
-	while (i >= 0)
+	if (ind == 'l')
 	{
-		if (img->endian == 1)
-			*pxl++ = (color >> i) & 0xFF;
+		if (p1->height == 0)
+			return (255 / (p2->height / p2->max_height));
 		else
-			*pxl++ = (color >> ((img->bpp - 8) - i)) & 0xFF;
-		i = i - 8;
+			return (255 / (p1->height / p1->max_height));
 	}
-}
-
-double	ft_round(double num)
-{
-	if (num - (int)num > 0.5)
-		return ((int)num + 1);
 	else
-		return ((int)num);
-
+	{
+		if (p2->height == 0)
+			return (255 / (p1->height / p1->max_height));
+		else
+			return (255 / (p2->height / p2->max_height));
+	}
 }
 
 void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
@@ -61,9 +72,9 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 	double	color;
 
 	sign = 1;
-	color = 0x00FFFF00;
 	if (p2->z - p1->z < 0)
 		sign = -1;
+	color = 0x0000FF00 + ((255.0 * p1->height / p1->max_height));
 	error = (2 * ft_pos(p2->z - p1->z)) - (p2->x - p1->x);
 	ft_plot(&plot, p1, 'l');
 	while (plot.x != p2->x)
@@ -73,7 +84,7 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 			plot.z += sign;
 			error += (2 * ((ft_pos(p2->z - p1->z)) - (p2->x - p1->x)));
 			if (p1->height != p2->height)
-				color += 255.0 / ft_pos(p1->z - p2->z);
+				color -= ((sign * (255.0 * (ft_pos(p1->height - p2->height) / p1->max_height)) / ft_pos(p1->z - p2->z)));
 		}
 		else
 			error += 2 * ft_pos(p2->z - p1->z);
@@ -90,7 +101,7 @@ void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
 	double	color;
 
 	sign = 1;
-	color = 0x00FFFFFF;
+	color = 0x0000FFFF - ((255.0 * (1 - (p1->height / p1->max_height))));
 	if (p2->x - p1->x < 0)
 		sign = -1;
 	error = (2 * ft_pos(p2->x - p1->x)) - (p2->z - p1->z);
@@ -105,7 +116,7 @@ void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
 		else
 			error += 2 * ft_pos(p2->x - p1->x);
 		if (p1->height != p2->height)
-			color -= 255.0 / ft_pos(p1->z - p2->z);
+			color -= (255.0 * (ft_pos(p1->height - p2->height) / p1->max_height)) / ft_pos(p1->z - p2->z);
 		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, color/*ft_color(&plot)*/);
 		plot.z++;
 	}
@@ -121,8 +132,6 @@ void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
 
 void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
 {
-	ft_mlx_pxl_draw_pos(img, p1->x, p1->z, 0x0000FFFF);
-	ft_mlx_pxl_draw_pos(img, p2->x, p2->z, 0x000000FF);
 	if (ft_pos(p2->z - p1->z) < ft_pos(p2->x - p1->x))
 	{
 		if (p1->x > p2->x)
@@ -139,6 +148,8 @@ void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
 			ft_draw_high_line(img, p1, p2);
 		}
 	}
+	ft_mlx_pxl_draw_pos(img, p1->x, p1->z, (0x0000FF00 + (255 * (p1->height / p1->max_height))));
+	ft_mlx_pxl_draw_pos(img, p2->x, p2->z, (0x0000FF00 + (255 * (p2->height / p2->max_height))));
 }
 
 int main(int argc, char **argv)
@@ -154,14 +165,15 @@ int main(int argc, char **argv)
 	mlx_window = mlx_new_window(mlx, 700, 700, "hi");
 	t_point p1, p2, p3;
 
-	p1.x = 100;
-	p1.z = 600;
-	p2.x = 400;
-	p2.z = 100;
-	p3.x = 600;
-	p3.z = 400;
+	p1.x = 300;
+	p1.z = 300;
+	p2.x = 350;
+	p2.z = 200;
+	p1.height = 0;
+	p2.height = 1;
+	p1.max_height = 4;
+	p2.max_height = 4;
 	ft_draw_line(&img, &p1, &p2);
-	ft_draw_line(&img, &p1, &p3);
 	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	mlx_loop(mlx);
 }
