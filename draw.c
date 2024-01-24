@@ -32,24 +32,6 @@ void	ft_plot(t_point *plot, t_point *p1, char ind)
 		plot->z++;
 }
 
-int	ft_color(int sign, t_point *p1, t_point *p2, char ind)
-{
-	if (ind == 'l')
-	{
-		if (p1->height == 0)
-			return (255 / (p2->height / p2->max_height));
-		else
-			return (255 / (p1->height / p1->max_height));
-	}
-	else
-	{
-		if (p2->height == 0)
-			return (255 / (p1->height / p1->max_height));
-		else
-			return (255 / (p2->height / p2->max_height));
-	}
-}
-
 void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 {
 	int	error;
@@ -60,7 +42,7 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 	sign = 1;
 	if (p2->z - p1->z < 0)
 		sign = -1;
-	color = 0xFF0000 + ((255.0 * p1->height / p1->max_height));
+	color = 0xFF0000 + ((255.0 * (p1->height / p1->max_height)));
 	error = (2 * ft_pos(p2->z - p1->z)) - (p2->x - p1->x);
 	ft_plot(&plot, p1, 'l');
 	while (plot.x != p2->x)
@@ -74,7 +56,7 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 		}
 		else
 			error += 2 * ft_pos(p2->z - p1->z);
-		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, color);
+		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, ft_round(color));
 		plot.x++;
 	}
 }
@@ -103,7 +85,7 @@ void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
 			error += 2 * ft_pos(p2->x - p1->x);
 		if (p1->height != p2->height)
 			color -= (255.0 * (ft_pos(p1->height - p2->height) / p1->max_height)) / ft_pos(p1->z - p2->z);
-		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, color/*ft_color(&plot)*/);
+		ft_mlx_pxl_draw_pos(img, plot.x, plot.z, ft_round(color));
 		plot.z++;
 	}
 }
@@ -134,6 +116,6 @@ void	ft_draw_line(t_data *img, t_point *p1, t_point *p2)
 			ft_draw_high_line(img, p1, p2);
 		}
 	}
-	ft_mlx_pxl_draw_pos(img, p1->x, p1->z, (0x0000FF00 + (255 * (p1->height / p1->max_height))));
-	ft_mlx_pxl_draw_pos(img, p2->x, p2->z, (0x0000FF00 + (255 * (p2->height / p2->max_height))));
+	ft_mlx_pxl_draw_pos(img, p1->x, p1->z, (0xFF0000 + (255.0 * (p1->height / p1->max_height))));
+	ft_mlx_pxl_draw_pos(img, p2->x, p2->z, (0xFF0000 + (255.0 * (p2->height / p2->max_height))));
 }

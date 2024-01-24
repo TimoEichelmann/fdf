@@ -39,6 +39,11 @@ typedef struct	s_point {
 	int		end;
 }t_point;
 
+typedef struct	s_vars {
+	void	*mlx;
+	void	*win;
+}t_vars;
+
 int		ft_pos(int	num);
 void	ft_plot(t_point *plot, t_point *p1, char ind);
 void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2);
