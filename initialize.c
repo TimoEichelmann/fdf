@@ -29,7 +29,7 @@ void	ft_insert(char **splitted, t_point *line, int row)
 	line[i].end = 0;
 }
 
-void	ft_offset(t_point **grid, double leftmost)
+void	ft_offset(t_point **grid, double leftmost, double lowest)
 {
 	int	i;
 	int	j;
@@ -41,6 +41,8 @@ void	ft_offset(t_point **grid, double leftmost)
 		while (grid[i][j].end)
 		{
 			grid[i][j].x -= leftmost;
+			grid[i][j].h += lowest;
+			grid[i][j].m_h += lowest;
 			j++;
 		}
 		i++;
@@ -54,24 +56,25 @@ void	ft_coordinates(t_point	**grid)
 	int		line;
 	int		ll;
 	double	leftmost;
+	double	lowest;
 
 	row = 0;
 	line = 0;
+	lowest = 0;
 	leftmost = 0;
 	while (grid[row])
 	{
 		while (grid[row][line].end)
 		{
 			ft_iso(&grid[row][line]);
-			if (grid[row][line].x < leftmost)
-				leftmost = grid[row][line].x;
+			ft_params(&grid[row][line], &leftmost, &lowest);
 			line++;
 		}
 		row++;
 		ll = line;
 		line = 0;
 	}
-	ft_offset(grid, leftmost);
+	ft_offset(grid, leftmost, lowest * -1);
 	ft_vectorize(grid, row - 1, ll - 1);
 }
 

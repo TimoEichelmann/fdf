@@ -78,7 +78,7 @@ void	ft_draw_low_line(t_data *img, t_point *p1, t_point *p2)
 			plot.z += sign;
 			error += (2 * ((ft_pos(p2->z - p1->z)) - (p2->x - p1->x)));
 			if (p1->h != p2->h)
-				c -= ((sign * (255.0 * (fabs(p1->h - p2->h) 
+				c -= ((sign * (255.0 * (fabs(p1->h - p2->h)
 									/ p1->m_h)) / fabs(p1->z - p2->z)));
 		}
 		else
@@ -108,8 +108,8 @@ void	ft_draw_high_line(t_data *img, t_point *p1, t_point *p2)
 		else
 			error += 2 * ft_pos(p2->x - p1->x);
 		if (p1->h != p2->h)
-			c -= (255.0 * 
-					(fabs(p1->h - p2->h) / p1->m_h)) / fabs(p1->z - p2->z);
+			c -= (255.0 * (fabs(p1->h - p2->h)
+						/ p1->m_h)) / fabs(p1->z - p2->z);
 		ft_pxl_pos(img, plot.x, plot.z, ft_round(c));
 		plot.z++;
 	}

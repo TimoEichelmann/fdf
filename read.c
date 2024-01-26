@@ -24,7 +24,7 @@ void	ft_check_map(char **splitted, char *str)
 		while (splitted[i][j])
 		{
 			if (splitted[i][j] != ' ' && splitted[i][j] != '\n'
-				&& !ft_isdigit(splitted[i][j]))
+				&& !ft_isdigit(splitted[i][j]) && splitted[i][j] != '-')
 			{
 				free(str);
 				ft_free_splitted(splitted);

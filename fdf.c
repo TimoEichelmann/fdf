@@ -15,15 +15,12 @@
 void	ft_free(t_point **grid)
 {
 	int	i;
-	int	j;
 
 	i = 0;
-	j = 0;
 	while (grid[i])
 	{
 		free(grid[i]);
 		i++;
-		j = 0;
 	}
 	free(grid);
 }

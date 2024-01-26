@@ -66,7 +66,7 @@ t_point	**ft_initialize(int fd);
 void	ft_gradient(t_point **grid);
 void	ft_max_height(t_point **grid, int max);
 int		ft_space_check(char *line, char *stash);
-void	ft_offset(t_point **grid, double leftmost);
+void	ft_offset(t_point **grid, double leftmost, double lowest);
 int		ft_determine_len(t_point **grid, double *len, int row, int ll);
 t_vars	*ft_vars(void *mlx, void *win, t_data *img);
 int		key_hook(int keycode, t_vars *vars);
@@ -74,5 +74,6 @@ int		ft_exit(t_vars *vars);
 void	ft_events(void *mlx, void *win, t_data *img);
 void	ft_draw_grid(t_data *img, t_point **grid);
 void	ft_check_map(char **p, char *str);
+void	ft_params(t_point *p, double *leftmost, double *lowest);
 
 #endif

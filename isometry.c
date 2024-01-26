@@ -53,9 +53,9 @@ void	ft_vectorize(t_point **grid, int row, int ll)
 	{
 		while (grid[row][ll].end)
 		{
-			grid[row][ll].x = ft_round((grid[row][ll].x * len) 
+			grid[row][ll].x = ft_round((grid[row][ll].x * len)
 					+ 350 - width * len);
-			grid[row][ll].z = ft_round((grid[row][ll].z * len) 
+			grid[row][ll].z = ft_round((grid[row][ll].z * len)
 					+ 350 - h * len + ind);
 			grid[row][ll].y *= len;
 			ll++;

@@ -43,3 +43,11 @@ void	ft_mlx_pxl_draw_addr(t_data *img, char *addr, int color)
 		i = i - 8;
 	}
 }
+
+void	ft_params(t_point *p, double *leftmost, double *lowest)
+{
+	if (p->x < *leftmost)
+		*leftmost = p->x;
+	if (p->h < *lowest)
+		*lowest = p->h;
+}
